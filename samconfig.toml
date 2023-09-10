@@ -20,7 +20,7 @@ resolve_s3 = true
 s3_prefix = "sam-daily-notify"
 region = "us-east-1"
 image_repositories = []
-parameter_overrides = "EmailAddress=fred@example.com"
+parameter_overrides = "EmailAddress=fred@example.com TopicName=DailyNotification"
 
 [default.package.parameters]
 resolve_s3 = true
