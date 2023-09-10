@@ -1,0 +1,60 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-daily-notify
+
+  Sample SAM Template for sam-daily-notify
+
+Parameters:
+  EmailAddress:
+    Type: String
+    Description: Email address for SNS subscription
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  NotifyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: notify/
+      Handler: app.lambda_handler
+      Runtime: python3.11
+      Architectures:
+        - x86_64
+      Events:
+        ScheduleEvent:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: "rate(1 day)"
+      Environment:
+        Variables:
+          SNS_TOPIC_ARN: !Ref SNSTopic # grab topic ARN so you can publish message to it from lambda
+
+  SNSTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref EmailAddress
+      TopicName: DailyNotification
+
+  TheConnector:
+    Type: AWS::Serverless::Connector
+    Properties:
+      Source:
+        Id: NotifyFunction
+      Destination:
+        Id: SNSTopic
+      Permissions:
+        - Write
+
+Outputs:
+  NotifyFunction:
+    Description: "Notify Lambda Function ARN"
+    Value: !GetAtt NotifyFunction.Arn
+  NotifyFunctionIamRole:
+    Description: "Implicit IAM Role created for Notify function"
+    Value: !GetAtt NotifyFunctionRole.Arn
